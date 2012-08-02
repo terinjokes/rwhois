@@ -48,25 +48,75 @@ if __FILE__ == $PROGRAM_NAME
     exit 64
   end
 
-  results = Whois.query(ARGV[0])
-  if options[:output] == :plaintext
-    puts results
-  else
-    response = {}
-    response["response"] = {}
-    response["response"]["daystamp"] = Date.today
-    case options[:output]
-    when :available
-      response["response"]["available"] = results.available?
-      response["response"]["registered"] = results.registered?
-    when :record
-      response["response"]["record"] = results.content
-    when :parts
-      response["response"]["parts"] = results.parts
+  begin
+    results = Whois.query(ARGV[0])
+    if options[:output] == :plaintext
+      response = results
     else
-      response["response"]["properties"] = results.properties
+      response = {}
+      response["response"] = {}
+      response["response"]["daystamp"] = Date.today
+      case options[:output]
+      when :available
+        response["response"]["available"] = results.available?
+        response["response"]["registered"] = results.registered?
+      when :record
+        response["response"]["record"] = results.content
+      when :parts
+        response["response"]["parts"] = results.parts
+      else
+        response["response"]["properties"] = results.properties
+      end
     end
-    puts response.to_json
+  rescue Whois::ServerNotFound
+    code = "R02"
+    name = "WhoisServerNotFound"
+    description = "Unable to determine proper WHOIS server"
+  rescue Whois::ResponseIsUnavailable
+    code = "R03"
+    name = "WhoisServerNotAvailable"
+    description = "The WHOIS is unavailable"
+  rescue Whois::WebInterfaceError
+    code = "R04"
+    name = "WhoisServerOnlyWeb"
+    description = "WHOIS is not supported on port 43"
+  rescue Whois::ServerError
+    code = "R05"
+    name = "WhoisServerError"
+    description = "An error occured while fetching the WHOIS"
+  rescue Timeout::Error
+    code = "S01"
+    name = "RemoteConnectionTimeout"
+    description = "Timeout while fetching the WHOIS"
+  rescue Whois::ResponseError
+    code = "S02"
+    name = "RemoteResponseError"
+    description = "Error with the WHOIS response"
+  rescue Whois::ParserError
+    code = "E01"
+    name = "ParserError"
+    description = "Error while parsing the WHOIS response"
+  rescue Whois::Error
+    code = "E00"
+    name = "ApplicationError"
+    description = "Whois Error: #{e.class}: #{e.message}"
+  ensure
+    if options[:output] == :plaintext
+      if !description
+        puts response
+      else
+        $stderr.puts description
+        exit 68
+      end
+    else
+      if !code
+        puts response.to_json
+      else
+        error = {"error" => {"code" => code, "name" => name}}
+        puts error.to_json
+        exit 68
+      end
+    end
   end
 
 end
