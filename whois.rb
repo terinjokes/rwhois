@@ -30,7 +30,7 @@ if __FILE__ == $PROGRAM_NAME
     $stderr.puts "You must supply a fully qualified domain or IPv4 or IPv6 address."
     $stderr.puts
     $stderr.puts option_parser.help
-    exit 1
+    exit 64
   end
 
   results = Whois.query(ARGV[0])
