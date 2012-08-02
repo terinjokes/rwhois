@@ -23,7 +23,7 @@ if __FILE__ == $PROGRAM_NAME
   option_parser = OptionParser.new do |opts|
     executable_name = File.basename($PROGRAM_NAME)
     opts.banner = "Usage: #{executable_name} [options] <domain | IPv4 | IPv6>"
-    opts.version = "v0.2.0"
+    opts.version = "v0.2.5"
     opts.on("-a", "--availabile", "Information about the domain availablity (JSON)") do
       options[:output] = :available
     end
