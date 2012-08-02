@@ -1,0 +1,10 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    whois (2.6.4)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  whois (~> 2.6.4)
