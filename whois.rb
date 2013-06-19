@@ -97,7 +97,7 @@ if __FILE__ == $PROGRAM_NAME
     code = "E01"
     name = "ParserError"
     description = "Error while parsing the WHOIS response"
-  rescue Whois::Error
+  rescue Whois::Error => e
     code = "E00"
     name = "ApplicationError"
     description = "Whois Error: #{e.class}: #{e.message}"
@@ -110,10 +110,20 @@ if __FILE__ == $PROGRAM_NAME
         exit 68
       end
     else
-      if !code
-        puts response.to_json
-      else
-        error = {"error" => {"code" => code, "name" => name}}
+      begin
+        if !code
+          puts response.to_json
+        else
+          error = {"error" => {"code" => code, "name" => name}}
+          puts error.to_json
+          exit 68
+        end
+      rescue Encoding::UndefinedConversionError => e
+        error = {"error" => {"code" => "E00", "name" => "ParserError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
+        puts error.to_json
+        exit 68
+      rescue => e
+        error = {"error" => {"code" => "E01", "name" => "ApplicationError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
         puts error.to_json
         exit 68
       end
