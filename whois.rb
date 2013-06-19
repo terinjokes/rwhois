@@ -4,6 +4,7 @@ require "bundler/setup"
 require 'json'
 require 'whois'
 require 'optparse'
+require 'date'
 
 # From http://ruhe.tumblr.com/post/565540643/generate-json-from-ruby-struct
 class Struct
@@ -49,7 +50,7 @@ if __FILE__ == $PROGRAM_NAME
   end
 
   begin
-    results = Whois.query(ARGV[0])
+    results = Whois::Client.new().lookup(ARGV[0])
     if options[:output] == :plaintext
       response = results
     else
