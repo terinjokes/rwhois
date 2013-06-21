@@ -1,0 +1,133 @@
+#!/usr/bin/env ruby
+require "rubygems"
+require "bundler/setup"
+require 'json'
+require 'whois'
+require 'optparse'
+require 'socket'
+require 'date'
+
+# From http://ruhe.tumblr.com/post/565540643/generate-json-from-ruby-struct
+class Struct
+  def to_map
+    map = Hash.new
+    self.members.each {|m| map[m] = self[m]}
+    map
+  end
+
+  def to_json(*a)
+    to_map.to_json(*a)
+  end
+end
+
+options = {:output => :plaintext}
+option_parser = OptionParser.new do |opts|
+  executable_name = File.basename($PROGRAM_NAME)
+  opts.banner = "Usage: #{executable_name} [options] <domain | IPv4 | IPv6>"
+  opts.version = "v0.2.5"
+  opts.on("-a", "--availabile", "Information about the domain availablity (JSON)") do
+    options[:output] = :available
+  end
+  opts.on("-r", "--record", "Raw WHOIS record for a domain (JSON)") do
+    options[:output] = :record
+  end
+  opts.on("-p", "--parts", "WHOIS records without merging multiple responses (JSON)") do
+    options[:output] = :parts
+  end
+  opts.on("-j", "--properties", "Parsed WHOIS record (JSON)") do
+    options[:output] = :properties
+  end
+  opts.on("-t", "--plaintext", "Raw WHOIS record for a domain (largely whois(1) compatible)") do
+    options[:output] = :plaintext
+  end
+end
+option_parser.parse!
+if ARGV.empty?
+  $stderr.puts "You must supply a fully qualified domain or IPv4 or IPv6 address."
+  $stderr.puts
+  $stderr.puts option_parser.help
+  exit 64
+end
+
+begin
+  ips = Socket.ip_address_list.select{|intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast?}
+  source_ip = ips[rand(ips.length)].ip_address
+  results = Whois::Client.new(:bind_host => source_ip, :timeout => 10).lookup(ARGV[0])
+  if options[:output] == :plaintext
+    response = results
+  else
+    response = {}
+    response["response"] = {}
+    response["response"]["daystamp"] = Date.today
+    case options[:output]
+    when :available
+      response["response"]["available"] = results.available?
+      response["response"]["registered"] = results.registered?
+    when :record
+      response["response"]["record"] = results.content
+    when :parts
+      response["response"]["parts"] = results.parts
+    else
+      response["response"]["properties"] = results.properties
+    end
+  end
+rescue Whois::ServerNotFound
+  code = "R02"
+  name = "WhoisServerNotFound"
+  description = "Unable to determine proper WHOIS server"
+rescue Whois::ResponseIsUnavailable
+  code = "R03"
+  name = "WhoisServerNotAvailable"
+  description = "The WHOIS is unavailable"
+rescue Whois::WebInterfaceError
+  code = "R04"
+  name = "WhoisServerOnlyWeb"
+  description = "WHOIS is not supported on port 43"
+rescue Whois::ServerError
+  code = "R05"
+  name = "WhoisServerError"
+  description = "An error occured while fetching the WHOIS"
+rescue Timeout::Error
+  code = "S01"
+  name = "RemoteConnectionTimeout"
+  description = "Timeout while fetching the WHOIS"
+rescue Whois::ResponseError
+  code = "S02"
+  name = "RemoteResponseError"
+  description = "Error with the WHOIS response"
+rescue Whois::ParserError
+  code = "E01"
+  name = "ParserError"
+  description = "Error while parsing the WHOIS response"
+rescue Whois::Error => e
+  code = "E00"
+  name = "ApplicationError"
+  description = "Whois Error: #{e.class}: #{e.message}"
+ensure
+  if options[:output] == :plaintext
+    if !description
+      puts response
+    else
+      $stderr.puts description
+      exit 68
+    end
+  else
+    begin
+      if !code
+        puts response.to_json
+      else
+        error = {"error" => {"code" => code, "name" => name, "description" => description}}
+        puts error.to_json
+        exit 68
+      end
+    rescue Encoding::UndefinedConversionError => e
+      error = {"error" => {"code" => "E00", "name" => "ParserError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
+      puts error.to_json
+      exit 68
+    rescue => e
+      error = {"error" => {"code" => "E01", "name" => "ApplicationError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
+      puts error.to_json
+      exit 68
+    end
+  end
+end
