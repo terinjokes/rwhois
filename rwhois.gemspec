@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
 	s.name = "rwhois"
-	s.version = "1.0.0"
+	s.version = "1.1.0"
 
 	s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
 	s.authors = ['Terin Stock']
@@ -12,6 +12,6 @@ Gem::Specification.new do |s|
 	s.homepage = 'http://cloudflare.com/'
 	s.required_ruby_version = Gem::Requirement.new(">= 1.9.2")
 	s.summary = 'A JSON wrapper for `whois`'
-	s.add_runtime_dependency('json', '~> 1.7.7')
+	s.add_runtime_dependency('multi_json', '~> 1.0')
 	s.add_runtime_dependency('whois', '>= 3.1.3', '<4.0.0')
 end

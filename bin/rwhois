@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
-require "rubygems"
-require "bundler/setup"
-require 'json'
+require 'multi_json'
 require 'whois'
 require 'optparse'
 require 'socket'
@@ -114,19 +112,19 @@ ensure
   else
     begin
       if !code
-        puts response.to_json
+        puts MultiJson.dump(response)
       else
         error = {"error" => {"code" => code, "name" => name, "description" => description}}
-        puts error.to_json
+        puts MultiJson.dump(error)
         exit 68
       end
     rescue Encoding::UndefinedConversionError => e
       error = {"error" => {"code" => "E00", "name" => "ParserError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
-      puts error.to_json
+      puts MultiJson.dump(error)
       exit 68
     rescue => e
       error = {"error" => {"code" => "E01", "name" => "ApplicationError", "description" => "Whois Error: #{e.class}: #{e.message}. Domain: #{ARGV}"}}
-      puts error.to_json
+      puts MultiJson.dump(error)
       exit 68
     end
   end
