@@ -5,16 +5,16 @@ require 'optparse'
 require 'socket'
 require 'date'
 
-# From http://ruhe.tumblr.com/post/565540643/generate-json-from-ruby-struct
-class Struct
-  def to_map
-    map = Hash.new
-    self.members.each {|m| map[m] = self[m]}
-    map
+# SuperStruct is a subclass of Struct implemented and utilized by `whois`
+class SuperStruct
+  def to_h
+    self.members.inject({}) do |hash, key|
+      hash.merge(key => self[key])
+    end
   end
 
   def to_json(*a)
-    to_map.to_json(*a)
+    to_h.to_json(*a)
   end
 end
 
