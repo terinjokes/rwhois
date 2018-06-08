@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'multi_json'
-require 'whois'
+require 'whois-parser'
+require 'whois/safe_record'
 require 'optparse'
 require 'socket'
 require 'date'
@@ -48,9 +49,9 @@ if ARGV.empty?
 end
 
 begin
-  ips = Socket.ip_address_list.select{|intf| intf.ipv4? and !intf.ipv4_loopback? and !intf.ipv4_multicast?}
+  ips = Socket.ip_address_list.select{ |intf| !intf.ipv4_loopback? and !intf.ipv4_multicast? and !intf.ipv6_loopback? and !intf.ipv6_linklocal? and !intf.ipv6_multicast? and !intf.ipv6_sitelocal? }
   source_ip = ips[rand(ips.length)].ip_address
-  results = Whois::Client.new(:bind_host => source_ip, :timeout => 10).lookup(ARGV[0])
+  results = Whois::SafeRecord.new(Whois::Client.new(:bind_host => source_ip, :timeout => 10).lookup(ARGV[0]))
   if options[:output] == :plaintext
     response = results
   else
