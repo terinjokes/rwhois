@@ -1,0 +1,40 @@
+PATH
+  remote: .
+  specs:
+    rwhois (1.3.0)
+      activesupport (~> 7.0.8)
+      multi_json (~> 1)
+      whois (~> 5)
+      whois-parser (~> 2)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    activesupport (7.0.8.4)
+      concurrent-ruby (~> 1.0, >= 1.0.2)
+      i18n (>= 1.6, < 2)
+      minitest (>= 5.1)
+      tzinfo (~> 2.0)
+    concurrent-ruby (1.3.3)
+    i18n (1.14.5)
+      concurrent-ruby (~> 1.0)
+    minitest (5.24.1)
+    multi_json (1.15.0)
+    rake (13.2.1)
+    tzinfo (2.0.6)
+      concurrent-ruby (~> 1.0)
+    whois (5.1.1)
+    whois-parser (2.0.0)
+      activesupport (>= 4)
+      whois (>= 4.1.0)
+
+PLATFORMS
+  arm64-darwin-23
+  ruby
+
+DEPENDENCIES
+  rake
+  rwhois!
+
+BUNDLED WITH
+   2.5.11
